@@ -16,7 +16,7 @@ class ServerConnector(SocketTransport):
     DefaultHost = "127.0.0.1"
     DefaultPort = 31415
     
-    def __init__(self, arguments, trust_callback=None):
+    def __init__(self, arguments=None, trust_callback=None):
         try:
             SocketTransport.__init__(self, arguments, trust_callback)
         except socket.error as e:
@@ -50,7 +50,7 @@ class ServerConnector(SocketTransport):
             else:
                 raise
 
-    def startSession(self, device_id, password):
+    def startSession(self, device_id, password=None):
         """
         Start a new Session with a Device known to the Server.
         """

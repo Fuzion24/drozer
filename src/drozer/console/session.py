@@ -61,9 +61,9 @@ class Session(cmd.Cmd):
 
         self.variables = {  'PATH': dataDir +'/bin:/sbin:/vendor/bin:/system/sbin:/system/bin:/system/xbin',
                             'WD': dataDir }
-        
+
         self.__load_variables()
-        
+
         if arguments.onecmd == None:
             self.__print_banner()
 
@@ -81,14 +81,14 @@ class Session(cmd.Cmd):
         """
 
         modules = self.modules.all(permissions=self.permissions(), prefix=self.__base)
-        
+
         if self.__base == "":
             modules = filter(lambda m: m.startswith(text), modules)
         elif text.startswith("."):
             modules = filter(lambda m: m.startswith(text[1:]), modules)
         else:
             modules = map(lambda m: m[len(self.__base):], filter(lambda m: m.startswith(self.__base + text), modules))
-        
+
         #if len(modules) == 1 and text == modules[0]:
         #    return []
 
@@ -114,7 +114,7 @@ class Session(cmd.Cmd):
             return self.reflector.resolve("com.mwr.dz.Agent").getContext()
         else:
             return None
-        
+
     def do_cd(self, args):
         """
         usage: cd NAMESPACE
@@ -168,27 +168,27 @@ class Session(cmd.Cmd):
     def do_clean(self, args):
         """
         usage: clean
-        
+
         Cleans APK and DEX files from drozer's cache.
-        
+
         During normal operation, drozer uploads a number of APK files to your device, and extracts the DEX bytecode from others already on your device. This can start to consume a large amount of space, particularly if you are developing drozer modules.
-        
+
         The `clean` command removes all of these cached files for you.
-        
+
         drozer will automatically re-upload any files that it needs as you continue to use it.
         """
 
         files = clean.clean(self.reflector)
-        
+
         self.stdout.write("Removed %d cached files.\n" % files)
 
     def do_contributors(self, args):
         """
         Display a list of drozer contributors.
         """
-        
+
         argv = shlex.split(args, comments=True)
-        
+
         if len(argv) == 1 and (argv[0] == "-h" or argv[0] == "--help"):
             self.do_help("contributors")
             return
@@ -205,17 +205,17 @@ class Session(cmd.Cmd):
         """
         Terminate your drozer session.
         """
-        
+
         try:
             if self.active:
                 self.__server.stopSession(self.__session_id)
-                
+
                 self.active = False
-    
+
             return True
         except ConnectionError:
             self.active = False
-            
+
             return True
 
     def do_help(self, args):
@@ -277,9 +277,9 @@ class Session(cmd.Cmd):
             dz> list debug
             information.debuggable
             dz>
-        
+
         optional arguments:
-        
+
           --unsupported         include a list of the modules that are not available on your device
         """
         argv = shlex.split(args, comments=True)
@@ -287,24 +287,24 @@ class Session(cmd.Cmd):
         if len(argv) == 1 and (argv[0] == "-h" or argv[0] == "--help"):
             self.do_help("list")
             return
-        
+
         include_unsupported = False
         if "--unsupported" in argv:
             argv.remove("--unsupported")
-            
+
             include_unsupported = True
-        
+
         term = len(argv) > 0 and argv[0] or None
-        
+
         s_modules = self.modules.all(contains=term, permissions=self.permissions(), prefix=self.__base)
-        
+
         if include_unsupported:
             u_modules = filter(lambda m: not m in s_modules, self.modules.all(contains=term, permissions=None, prefix=self.__base))
         else:
             u_modules = []
 
         self.stdout.write(console.format_dict(dict(map(lambda m: [m, self.modules.get(m).name], s_modules))) + "\n")
-        
+
         if len(u_modules) > 0:
             self.stdout.write("\nUnsupported Modules:\n\n")
             self.stdout.write(console.format_dict(dict(map(lambda m: [m, self.modules.get(m).name], u_modules))) + "\n")
@@ -342,22 +342,22 @@ class Session(cmd.Cmd):
     def do_module(self, args):
         """
         usage: module [COMMAND]
-    
+
         Run the drozer Module and Repository Manager.
-    
+
         The Repository Manager handles drozer modules and module repositories.
         """
-        
+
         ModuleManager().run(shlex.split(args, comments=True))
         self.modules.reload()
-        
+
     def do_permissions(self, args):
         """
         usage: permissions
-        
+
         Prints out the permissions granted to the agent being used in this session.
         """
-        
+
         if self.has_context():
             self.stdout.write("Has ApplicationContext: YES\n")
             self.stdout.write("Available Permissions:\n")
@@ -366,7 +366,7 @@ class Session(cmd.Cmd):
                     self.stdout.write(" - %s\n" % (permission))
         else:
             self.stdout.write("Has ApplicationContext: NO\n")
-        
+
     def do_run(self, args):
         """
         usage: run MODULE [OPTIONS]
@@ -374,31 +374,34 @@ class Session(cmd.Cmd):
         To see the options for a particular module, run `help MODULE`.
         """
         argv = shlex.split(args, comments=True)
+        results = None
 
         if len(argv) == 1 and (argv[0] == "-h" or argv[0] == "--help"):
             self.do_help("run")
-            return
+            return results
 
         if len(argv) > 0:
             try:
                 module = self.__module(argv[0])
                 module.push_completer = self.__push_module_completer
                 module.pop_completer = self.__pop_module_completer
-                
+
                 self.__module_pushed_completers = 0
             except KeyError as e:
                 self.stderr.write("unknown module: %s\n" % str(e))
                 return None
 
             try:
-                module.run(argv[1:])
+                results = module.run(argv[1:])
             except KeyboardInterrupt:
                 self.stderr.write("\nCaught SIGINT. Interrupt again to terminate you session.\n")
             except Exception as e:
                 self.handleException(e)
-            
+
             while self.__module_pushed_completers > 0:
                 self.__pop_module_completer()
+
+            return results
         else:
             self.do_help("run")
 
@@ -425,7 +428,7 @@ class Session(cmd.Cmd):
             offset = len(_line.group(0))
             # we pass over the arguments for autocompletion, but strip off the command and module
             # name for simplicity
-            
+
             #return self.__module(_line.group(2)).complete(text, line, begidx, endidx)
             return self.__module(_line.group(2)).complete(text, line[offset:], begidx - offset, endidx - offset)
 
@@ -451,23 +454,23 @@ class Session(cmd.Cmd):
             return self.do_run(".shell.exec \"%s\"" % args)
         else:
             return self.do_run(".shell.start")
-    
+
     def help_intents(self):
         """
         An intent is an abstract description of an operation to be performed. It can be used with app.activity.start to launch an Activity, app.broadcast.send to send it to any interested BroadcastReceiver components, and app.service.start to communicate with a background Service.
-        
+
         An Intent provides a facility for performing late runtime binding between the code in different applications. Its most significant use is in the launching of activities, where it can be thought of as the glue between activities. It is basically a passive data structure holding an abstract description of an action to be performed.
-        
-        
+
+
         Intent Structure
         ----------------
         The primary pieces of information in an intent are:
-        
+
           action: the general action to be performed
           data: the data to operate on
-        
+
         In addition to these primary attributes, there are a number of secondary attributes that you can also include with an intent:
-        
+
           category: gives additional information about the action to execute
           type: specifies an explicit MIME type (a MIME type) of the data
           component: specifies an explicit component class
@@ -479,26 +482,26 @@ class Session(cmd.Cmd):
         Intent Formulation
         ------------------
         In drozer, intents are formulated using a set of command-line options. Some of these set a simple String in the Intent:
-        
+
           --action ACTION
           --category CATEGORY
           --component PACKAGE COMPONENT
           --data-uri URI
           --flags FLAG [FLAG ...]
           --mimetype TYPE
-        
+
         When specifying a component, the fully-qualified name of both the package and component must be used, for example to specify the BrowserActivity within the com.android.browser package:
-        
+
           --component com.android.browser com.android.browser.BrowserActivity
-          
+
         Intents can carry messages or commands inside of them in the form of extras. Applications may want to pass additional information inside of the intents they send to one another, possibly containing the data to perform a task on, or any other user-defined task to initiate from the received data.
-        
+
         Passing the extras is a little more complex. You need to tell drozer the data type, key and value:
-          
+
           --extra TYPE KEY VALUE
-        
+
         drozer supports a few common types:
-        
+
           boolean
           byte
           char
@@ -507,41 +510,41 @@ class Session(cmd.Cmd):
           integer
           short
           string
-        
+
         """
-        
+
         self.stdout.write(wrap(textwrap.dedent(self.help_intents.__doc__).strip() + "\n\n", console.get_size()[0]))
-    
+
     def has_context(self):
         if self.__has_context == None:
             self.__has_context = not self.reflector.resolve("com.mwr.dz.Agent").getContext() == None
-            
+
         return self.__has_context == True
-    
+
     def permissions(self):
         """
         Retrieves the set of permissions that we have in this session.
         """
-        
+
         if self.__permissions == None and self.has_context():
             pm = self.reflector.resolve("android.content.pm.PackageManager")
             packageName = str(self.context().getPackageName())
             packageManager = self.context().getPackageManager()
-            
+
             package = packageManager.getPackageInfo(packageName, pm.GET_PERMISSIONS)
             self.__permissions = []
             if package.requestedPermissions != None:
                 requestedPermissions = map(lambda p: str(p), package.requestedPermissions)
-                
+
                 for permission in requestedPermissions:
                     #Check for PERMISSION_GRANTED
                     if (packageManager.checkPermission(str(permission), packageName) == pm.PERMISSION_GRANTED):
                         self.__permissions.append(str(permission))
-            
+
             self.__permissions.append("com.mwr.dz.permissions.GET_CONTEXT")
         elif self.__permissions == None:
             self.__permissions = []
-        
+
         return self.__permissions
 
     def preloop(self):
@@ -593,10 +596,10 @@ class Session(cmd.Cmd):
         """
         Load extra variables, specified in the .drozer_config file.
         """
-        
+
         for key in Configuration.get_all_keys("vars"):
             self.variables[key] = Configuration.get("vars", key)
-        
+
     def __module(self, key):
         """
         Gets a module instance, by identifier, and initialises it with the
@@ -645,29 +648,29 @@ class Session(cmd.Cmd):
             modules = self.modules.all(permissions=self.permissions(), prefix=None)
         else:
             self.modules.all(permissions=self.permissions(), prefix=self.__base)
-        
+
         return set(map(lambda m: self.__module("." + m).namespace(), modules))
-    
+
     def __push_module_completer(self, completer, history_file=None):
         """
         Delegate, passed to the module, so it can add a new readline completer
         to the stack.
         """
-        
+
         self.__module_pushed_completers += 1
-        
+
         self.push_completer(completer, history_file)
-    
+
     def __pop_module_completer(self):
         """
         Delegate, passed to the module, so it can add a remove a readline completer
         from the stack.
         """
-        
+
         self.__module_pushed_completers -= 1
-        
+
         self.pop_completer()
-    
+
     def __print_banner(self):
         print "            ..                    ..:."
         print "           ..o..                  .r.."
@@ -739,16 +742,16 @@ class DebugSession(Session):
 
         self.intro = "drozer Console (v%s debug mode)" % meta.version
         self.prompt = "dz> "
-        
+
     def do_reload(self, args):
         """
         usage: reload
-        
+
         Load a fresh copy of all modules from disk.
         """
-        
+
         self.modules.reload()
-        
+
         self.stdout.write("Done.\n\n")
 
     def handleException(self, e):

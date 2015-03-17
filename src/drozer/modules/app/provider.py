@@ -50,7 +50,7 @@ class Delete(Module, common.Provider):
         parser.add_argument("uri", help="the content provider uri to query")
         parser.add_argument("--selection", default=None, metavar="conditions", help="the conditions to apply to the query, as in \"WHERE <conditions>\"")
         parser.add_argument("--selection-args", default=None, metavar="arg", nargs="*", help="any parameters to replace '?' in --selection")
-    
+
     def execute(self, arguments):
         self.contentResolver().delete(arguments.uri, arguments.selection, arguments.selection_args)
 
@@ -76,10 +76,10 @@ class Download(Module, common.Provider):
 
     def execute(self, arguments):
         data = self.contentResolver().read(arguments.uri)
-        
+
         if os.path.isdir(arguments.destination):
             arguments.destination = os.path.sep.join([arguments.destination, arguments.uri.split("/")[-1]])
-        
+
         output = open(arguments.destination, 'w')
         output.write(str(data))
         output.close()
@@ -89,12 +89,12 @@ class Download(Module, common.Provider):
     def get_completion_suggestions(self, action, text, **kwargs):
         if action.dest == "destination":
             return common.path_completion.on_console(text)
-        
+
 class FindUri(Module, common.FileSystem, common.PackageManager, common.Provider, common.Strings, common.ZipFile):
 
     name = "Find referenced content URIs in a package"
     description = """Finds Content URIs within a package.
-    
+
 This module uses a number of strategies to identify a content URI, including inspecting the authorities, path permissions and searching for strings inside the package."""
     examples = """Find content provider URIs in the Browser:
 
@@ -122,7 +122,7 @@ This module uses a number of strategies to identify a content URI, including ins
 
     def execute(self, arguments):
         uris = self.findAllContentUris(arguments.package)
-        
+
         if len(uris) > 0:
             for uri in uris:
                 self.stdout.write("%s\n" % uri[uri.upper().find("CONTENT"):])
@@ -186,20 +186,20 @@ Finding content providers that do not require permissions to read/write:
             package = self.packageManager().getPackageInfo(arguments.package, common.PackageManager.GET_PROVIDERS | common.PackageManager.GET_URI_PERMISSION_PATTERNS)
 
             self.__get_providers(arguments, package)
-            
+
     def get_completion_suggestions(self, action, text, **kwargs):
         if action.dest == "permission":
             return ["null"] + android.permissions
 
     def __get_providers(self, arguments, package):
-        providers = self.match_filter(package.providers, 'authority', arguments.filter)        
-        
+        providers = self.match_filter(package.providers, 'authority', arguments.filter)
+
         if arguments.permission != None:
             r_providers = self.match_filter(providers, 'readPermission', arguments.permission)
             w_providers = self.match_filter(providers, 'writePermission', arguments.permission)
 
             providers = set(r_providers + w_providers)
-            
+
         exported_providers = self.match_filter(providers, 'exported', True)
         hidden_providers = self.match_filter(providers, 'exported', False)
 
@@ -269,7 +269,7 @@ class Insert(Module, common.Provider):
         parser.add_argument('--long', action="append", nargs=2, metavar=('column', 'data'))
         parser.add_argument('--short', action="append", nargs=2, metavar=('column', 'data'))
         parser.add_argument('--string', action="append", nargs=2, metavar=('column', 'data'))
-    
+
     def execute(self, arguments):
         values = self.new("android.content.ContentValues")
 
@@ -298,7 +298,7 @@ class Insert(Module, common.Provider):
         self.contentResolver().insert(arguments.uri, values);
 
         self.stdout.write("Done.\n\n")
-        
+
 class Query(Module, common.Provider, common.TableFormatter):
 
     name = "Query a content provider"
@@ -318,7 +318,7 @@ Querying, with a WHERE clause in the SELECT statement:
     dz> run app.provider.query content://settings/secure
                 --selection "_id=?"
                 --selection-args 10
-    
+
     | _id | name                                    | value   |
     | 10  | sys_storage_full_threshold_bytes        | 2097152 |"""
     author = "MWR InfoSecurity (@mwrlabs)"
@@ -364,7 +364,7 @@ class Read(Module, common.Provider):
 
     def execute(self, arguments):
         self.stdout.write(self.contentResolver().read(arguments.uri) + "\n")
-        
+
 class Update(Module, common.Provider):
 
     name = "Update a record in a content provider"
@@ -393,7 +393,7 @@ class Update(Module, common.Provider):
         parser.add_argument('--long', action="append", nargs=2, metavar=('column', 'data'))
         parser.add_argument('--short', action="append", nargs=2, metavar=('column', 'data'))
         parser.add_argument('--string', action="append", nargs=2, metavar=('column', 'data'))
-    
+
     def execute(self, arguments):
         values = self.new("android.content.ContentValues")
 

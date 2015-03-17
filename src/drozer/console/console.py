@@ -26,7 +26,6 @@ class Console(cli.Base):
 
     def __init__(self):
         cli.Base.__init__(self)
-        
         self._parser.add_argument("device", default=None, nargs='?', help="the unique identifier of the Agent to connect to")
         self._parser.add_argument("--server", default=None, metavar="HOST[:PORT]", help="specify the address and port of the drozer server")
         self._parser.add_argument("--ssl", action="store_true", default=False, help="connect with SSL")
@@ -38,6 +37,8 @@ class Console(cli.Base):
         self._parser.add_argument("-f", "--file", default=[], help="source file", nargs="*")
         
         self.__accept_certificate = False
+        self.__server = None
+        self.__server = None
         self.__server = None
         
     def do_connect(self, arguments):

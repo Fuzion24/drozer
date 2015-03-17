@@ -15,7 +15,7 @@ class SqlTables(Module, common.FileSystem, common.PackageManager, common.Provide
 
     def add_arguments(self, parser):
         parser.add_argument("-a", "--package", "--uri", dest="package_or_uri", help="specify a package, or content uri to search", metavar="<package or uri>")
-        
+
     def execute(self, arguments):
         results = []
         if arguments.package_or_uri != None and arguments.package_or_uri.startswith("content://"):
@@ -23,8 +23,8 @@ class SqlTables(Module, common.FileSystem, common.PackageManager, common.Provide
         else:
             for uri in self.findAllContentUris(arguments.package_or_uri):
                 results.append(self.__test_uri(uri))
-        
-        if results: 
+
+        if results:
             self.stdout.write('\n'.join(filter(None, results)) + '\n')
         else:
             self.stdout.write("No results found.\n")

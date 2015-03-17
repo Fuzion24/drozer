@@ -137,6 +137,32 @@ class FileSystem(object):
         else:
             return None
 
+    def setWorldReadableWritableExecutable(self, target):
+        """
+        Sets a file chmod 777 
+        """
+
+        FileUtil = self.loadClass("common/FileUtil.apk", "FileUtil")
+
+        file_io = self.new("java.io.File", source)
+
+        if file_io.exists() == True:
+            return FileUtil.setWorldReadableWritableExecutable(file_io)
+        else:
+            return None
+
+    def touchFile(self, target):
+        """
+        Creates an empty file at @target
+        """
+        
+        FileUtil = self.loadClass("common/FileUtil.apk", "FileUtil")
+
+        file_io = self.new("java.io.File", target)
+
+        return FileUtil.touch(file_io)
+
+
     def readFile(self, source, block_size=65536):
         """
         Read a file from the Agent's file system, and return the data.
