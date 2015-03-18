@@ -49,13 +49,15 @@ public class FileUtil {
 
   public static void setWorldReadableWritableExecutable(final String path) {
     final File file = new File(path);
-    file.setReadable(true, false);
-    file.setExecutable(true, false);
-    file.setWritable(true, false);
+    if(file.exists()){
+      file.setReadable(true, false);
+      file.setExecutable(true, false);
+      file.setWritable(true, false);
+    }
 }
 
 public static void touch(final String path) throws IOException{
-    final File file = new File(path); 
+    final File file = new File(path);
     if (!file.exists()) {
        new FileOutputStream(file).close();
     }

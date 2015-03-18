@@ -21,6 +21,15 @@ class Traversal(Module, common.FileSystem, common.PackageManager, common.Provide
         vulnerable = set([])
         uris = set([])
 
+        flag_path = "/data/data/com.mwr.dz/files/public/"
+        flag_name = "traversal_flag"
+        self.__traversal_flag = flag_path + flag_name
+
+        self.ensureDirectory(flag_path)
+        self.setFileWorldReadableWritableExecutable(flag_path)
+        self.writeFile(self.__traversal_flag, "Hello")
+        self.setFileWorldReadableWritableExecutable(self.__traversal_flag)
+
         if arguments.package_or_uri != None and arguments.package_or_uri.startswith("content://"):
             uris.add(arguments.package_or_uri)
 
@@ -55,7 +64,7 @@ class Traversal(Module, common.FileSystem, common.PackageManager, common.Provide
 
     def __test_uri(self, uri, vulnerable):
         try:
-            data = self.contentResolver().read(uri + "/../../../../../../../../../../../../../../../../data/logging/poop")
+            data = self.contentResolver().read(uri + "/../../../../../../../../../../../../../../../.." + self.__traversal_flag)
         except ReflectionException as e:
             if e.message.find("java.io.FileNotFoundException") >= 0 or \
                 e.message.find("java.lang.IllegalArgumentException") >= 0 or \

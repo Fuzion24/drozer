@@ -37,7 +37,7 @@ class FileSystem(object):
         if data:
             if os.path.isdir(destination):
                 destination = os.path.sep.join([destination, source.split("/")[-1]])
-                
+
             output = open(destination, 'wb')
             output.write(str(data))
             output.close()
@@ -45,13 +45,13 @@ class FileSystem(object):
             return len(data)
         else:
             return None
-        
+
     def ensureDirectory(self, target):
         """
         Tests whether a directory exists, on the Agent's file system, and creates
         it if it does not.
         """
-        
+
         if self.isFile(target):
             return False
         elif not self.isDirectory(target):
@@ -79,50 +79,50 @@ class FileSystem(object):
             return file_io.length()
         else:
             return None
-    
+
     def format_file_size(self, size):
         """
         Return the size of a file in human-readable form (i.e., x KiB).
         """
-        
+
         for x in ['bytes', 'KiB', 'MiB', 'GiB']:
             if size < 1024.0 and size > -1024.0:
                 if x != "bytes":
                     return "%.1f %s" % (size, x)
                 else:
                     return "%d %s" % (size, x)
-            
+
             size /= 1024.0
-            
+
         return "%3.1f%s" % (size, 'TiB')
 
     def isDirectory(self, target):
         """
         Test whether a target exists, and is a directory.
         """
-        
+
         file_io = self.new("java.io.File", target)
-        
+
         return file_io.exists() and file_io.isDirectory()
 
     def isFile(self, target):
         """
         Test whether a target exists, and is a normal file.
         """
-        
+
         file_io = self.new("java.io.File", target)
-        
+
         return file_io.exists() and file_io.isFile()
-        
+
     def listFiles(self, target):
         """
         Gets a list of all files in the folder target.
         """
         #TODO does not work past the first folder
         file_io = self.new("java.io.File", target)
-        
+
         return ["%s%s" %(s, '/') if file_io.isDirectory() else s for s in file_io.list()]
-        
+
     def md5sum(self, source):
         """
         Calculate the MD5 checksum of a file on the Agent's file system.
@@ -137,30 +137,24 @@ class FileSystem(object):
         else:
             return None
 
-    def setWorldReadableWritableExecutable(self, target):
+    def setFileWorldReadableWritableExecutable(self, target):
         """
-        Sets a file chmod 777 
+        Sets a file chmod 777
         """
 
         FileUtil = self.loadClass("common/FileUtil.apk", "FileUtil")
+        FileUtil.setWorldReadableWritableExecutable(target)
 
-        file_io = self.new("java.io.File", source)
 
-        if file_io.exists() == True:
-            return FileUtil.setWorldReadableWritableExecutable(file_io)
-        else:
-            return None
 
     def touchFile(self, target):
         """
         Creates an empty file at @target
         """
-        
+
         FileUtil = self.loadClass("common/FileUtil.apk", "FileUtil")
 
-        file_io = self.new("java.io.File", target)
-
-        return FileUtil.touch(file_io)
+        FileUtil.touch(target)
 
 
     def readFile(self, source, block_size=65536):
@@ -176,10 +170,10 @@ class FileSystem(object):
             file_stream = self.new("java.io.FileInputStream", file_io)
 
             data = ""
-            
+
             while True:
                 block = ByteStreamReader.read(file_stream, 0, block_size)
-                
+
                 if len(block) > 0:
                     data += str(block)
                 else:
@@ -191,12 +185,12 @@ class FileSystem(object):
         """
         Copy a file from the local file system to the Agent's.
         """
-        
+
         if self.isDirectory(destination):
             destination = "/".join([destination, source.split(os.path.sep)[-1]])
 
         return self.writeFile(destination, open(source, 'rb').read(), block_size=block_size)
-    
+
     def workingDir(self):
         """
         Get the full path to the Agent's working directory.
@@ -220,8 +214,8 @@ class FileSystem(object):
                 ByteStreamWriter.writeHexStream(file_stream, binascii.hexlify(c))
 
             file_stream.close()
-            
+
             return len(data)
         else:
             return None
-            
+
